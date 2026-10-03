@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz 1: Differentiation for Signals and Linear Differential Equations</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+
+/* Submit popup */
+.quiz-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.62);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.quiz-modal.show { display: flex; }
+.quiz-modal-card {
+  width: min(520px, 100%);
+  background: #fff;
+  border-radius: 18px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+  animation: popupIn .22s ease-out;
+}
+@keyframes popupIn {
+  from { opacity: 0; transform: translateY(12px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.quiz-modal-icon { font-size: 48px; margin-bottom: 10px; }
+.quiz-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.quiz-modal-message {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.quiz-modal-close {
+  padding: 12px 30px;
+  border: 0;
+  border-radius: 10px;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.submit-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22,163,74,.3);
+}
+.submit-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Quiz 1: Differentiation for Signals and Linear Differential Equations</h1>
+    <div class="meta">10 questions</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Question 1</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Find the first derivative <span class="math"><span class="frac"><span class="frac-num">dx</span><span class="frac-den">dt</span></span></span> for the combined signal function <span class="math">x(t) = 3t<sup>2</sup> + 4e<sup>-t</sup> + 5sin(2t)</span>.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Apply the power rule, exponential rule, and sine chain rule term-by-term.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This option fails to account for the negative sign resulting from differentiating $e^{-t}$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">6t + 4e<sup>-t</sup> + 10cos(2t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option fails to account for the negative sign resulting from differentiating <span class="math">e<sup>-t</sup></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This option forgets to multiply the coefficient by the inner derivative of $2t$ when differentiating $5\sin(2t)$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">6t - 4e<sup>-t</sup> + 5cos(2t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option forgets to multiply the coefficient by the inner derivative of <span class="math">2t</span> when differentiating <span class="math">5sin(2t)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This option incorrectly reduces the coefficient of the power term instead of multiplying by the exponent.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">3t - 4e<sup>-t</sup> + 10cos(2t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option incorrectly reduces the coefficient of the power term instead of multiplying by the exponent.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Differentiating term-by-term using the power rule on $3t^2$, the exponential rule on $4e^{-t}$, and the sine rule with chain rule on $5\sin(2t)$ yields this correct expression.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">6t - 4e<sup>-t</sup> + 10cos(2t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Differentiating term-by-term using the power rule on <span class="math">3t<sup>2</sup></span>, the exponential rule on <span class="math">4e<sup>-t</sup></span>, and the sine rule with chain rule on <span class="math">5sin(2t)</span> yields this correct expression.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Question 2</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">What is the first derivative <span class="math"><span class="frac"><span class="frac-num">dx</span><span class="frac-den">dt</span></span></span> of the polynomial and trigonometric signal <span class="math">x(t) = 6t<sup>5</sup> - 4t<sup>2</sup> + 9 - 2cos(5t)</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Differentiate each term independently and remember the negative sign in the derivative of cosine.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This choice neglects multiplying the base coefficients by the powers during the power rule step.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">6t<sup>4</sup> - 4t + 10sin(5t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This choice neglects multiplying the base coefficients by the powers during the power rule step.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This option incorrectly retains the constant term $9$, which should differentiate to $0$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">30t<sup>4</sup> - 8t + 9 + 10sin(5t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option incorrectly retains the constant term <span class="math">9</span>, which should differentiate to <span class="math">0</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Differentiating $6t^5$ gives $30t^4$, $-4t^2$ gives $-8t$, the constant $9$ vanishes, and $-2\cos(5t)$ gives $-2(-5\sin(5t)) = 10\sin(5t)$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">30t<sup>4</sup> - 8t + 10sin(5t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Differentiating <span class="math">6t<sup>5</sup></span> gives <span class="math">30t<sup>4</sup></span>, <span class="math">-4t<sup>2</sup></span> gives <span class="math">-8t</span>, the constant <span class="math">9</span> vanishes, and <span class="math">-2cos(5t)</span> gives <span class="math">-2(-5sin(5t)) = 10sin(5t)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This mistake stems from forgetting that the derivative of cosine introduces an additional negative sign, turning $-2\cos(5t)$ into positive $+10\sin(5t)$.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">30t<sup>4</sup> - 8t - 10sin(5t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This mistake stems from forgetting that the derivative of cosine introduces an additional negative sign, turning <span class="math">-2cos(5t)</span> into positive <span class="math">+10sin(5t)</span>.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Question 3</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Given the polynomial signal <span class="math">x(t) = t<sup>3</sup> - 3t<sup>2</sup> + 2t</span>, what is its second derivative <span class="math">x''(t)</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Differentiate the polynomial function once to get the first derivative, then differentiate again.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This expression represents only the first derivative $x'(t)$ rather than the second derivative $x''(t)$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">3t<sup>2</sup> - 6t + 2</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This expression represents only the first derivative <span class="math">x'(t)</span> rather than the second derivative <span class="math">x''(t)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This option incorrectly drops the derivative of the $-6t$ term during the second differentiation step.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">6t</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option incorrectly drops the derivative of the <span class="math">-6t</span> term during the second differentiation step.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="First derivative $x'(t) = 3t^2 - 6t + 2$; differentiating a second time yields $x''(t) = 6t - 6$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">6t - 6</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">First derivative <span class="math">x'(t) = 3t<sup>2</sup> - 6t + 2</span>; differentiating a second time yields <span class="math">x''(t) = 6t - 6</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This error occurs if power reduction is misapplied to the linear term during the second differentiation step.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">6t - 6t</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This error occurs if power reduction is misapplied to the linear term during the second differentiation step.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Question 4</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">For a sinusoidal signal <span class="math">x(t) = 4cos(3t)</span>, what is its second derivative <span class="math">x''(t)</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Remember that two differentiations of a cosine signal result in a negated cosine multiplied by <span class="math">ω<sup>2</sup></span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Differentiating twice multiplies the original signal by $-\omega^2 = -3^2 = -9$, giving $-9 \cdot 4\cos(3t) = -36\cos(3t)$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">-36cos(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Differentiating twice multiplies the original signal by <span class="math">-ω<sup>2</sup> = -3<sup>2</sup> = -9</span>, giving <span class="math">-9 · 4cos(3t) = -36cos(3t)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This error arises from failing to multiply by the inner frequency factor $\omega = 3$ during the second differentiation step.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">-12cos(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This error arises from failing to multiply by the inner frequency factor <span class="math">ω = 3</span> during the second differentiation step.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This option omits the negative sign introduced by two successive trigonometric differentiations.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">36cos(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option omits the negative sign introduced by two successive trigonometric differentiations.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This answer corresponds to the first derivative $x'(t)$, not the second derivative.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">-12sin(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This answer corresponds to the first derivative <span class="math">x'(t)</span>, not the second derivative.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Question 5</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Find the derivative of the signal <span class="math">x(t) = t<sup>2</sup> e<sup>-3t</sup></span> using the product rule.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Apply <span class="math">u'v + uv'</span> where one factor is <span class="math">t<sup>2</sup></span> and the other is <span class="math">e<sup>-3t</sup></span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This option only differentiates the polynomial part while leaving the exponential part untouched without completing the product rule.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">2t e<sup>-3t</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option only differentiates the polynomial part while leaving the exponential part untouched without completing the product rule.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Applying $(uv)' = u'v + uv'$ with $u = t^2$ ($u' = 2t$) and $v = e^{-3t}$ ($v' = -3e^{-3t}$) yields $2t e^{-3t} - 3t^2 e^{-3t} = (2t - 3t^2)e^{-3t}$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">(2t - 3t<sup>2</sup>)e<sup>-3t</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Applying <span class="math">(uv)' = u'v + uv'</span> with <span class="math">u = t<sup>2</sup></span> (<span class="math">u' = 2t</span>) and <span class="math">v = e<sup>-3t</sup></span> (<span class="math">v' = -3e<sup>-3t</sup></span>) yields <span class="math">2t e<sup>-3t</sup> - 3t<sup>2</sup> e<sup>-3t</sup> = (2t - 3t<sup>2</sup>)e<sup>-3t</sup></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This option fails to carry the negative sign from differentiating $e^{-3t}$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">(2t + 3t<sup>2</sup>)e<sup>-3t</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option fails to carry the negative sign from differentiating <span class="math">e<sup>-3t</sup></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This common procedural error comes from multiplying the derivatives of individual factors instead of using the product rule formula.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">-6t e<sup>-3t</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This common procedural error comes from multiplying the derivatives of individual factors instead of using the product rule formula.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Question 6</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Using the product rule, what is the first derivative of the composite signal <span class="math">x(t) = e<sup>-t</sup> cos(3t)</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Use the formula <span class="math">(uv)' = u'v + uv'</span> and remember that <span class="math"><span class="frac"><span class="frac-num">d</span><span class="frac-den">dt</span></span>cos(3t) = -3sin(3t)</span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This stems from a sign mistake when differentiating $\cos(3t)$, which should yield a negative sine term.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">-e<sup>-t</sup> cos(3t) + 3e<sup>-t</sup> sin(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This stems from a sign mistake when differentiating <span class="math">cos(3t)</span>, which should yield a negative sine term.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Setting $u = e^{-t}$ ($u' = -e^{-t}$) and $v = \cos(3t)$ ($v' = -3\sin(3t)$) gives $u'v + uv' = -e^{-t}\cos(3t) - 3e^{-t}\sin(3t)$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">-e<sup>-t</sup> cos(3t) - 3e<sup>-t</sup> sin(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Setting <span class="math">u = e<sup>-t</sup></span> (<span class="math">u' = -e<sup>-t</sup></span>) and <span class="math">v = cos(3t)</span> (<span class="math">v' = -3sin(3t)</span>) gives <span class="math">u'v + uv' = -e<sup>-t</sup>cos(3t) - 3e<sup>-t</sup>sin(3t)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This incorrect result comes from directly multiplying individual factor derivatives.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">3e<sup>-t</sup> sin(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This incorrect result comes from directly multiplying individual factor derivatives.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This reflects a confusion between the product rule and standard chain rule differentiation.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">-e<sup>-t</sup> sin(3t)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This reflects a confusion between the product rule and standard chain rule differentiation.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Question 7</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Find the derivative <span class="math"><span class="frac"><span class="frac-num">dx</span><span class="frac-den">dt</span></span></span> of the rational signal expression <span class="math">x(t) = <span class="frac"><span class="frac-num">t<sup>2</sup> + 1</span><span class="frac-den">t + 1</span></span></span>.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Use the quotient rule formula <span class="math"><span class="frac"><span class="frac-num">vu' - uv'</span><span class="frac-den">v<sup>2</sup></span></span></span> with <span class="math">u</span> as the numerator and <span class="math">v</span> as the denominator.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This represents the mistake of differentiating the numerator and denominator separately without using the quotient rule.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">2t</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This represents the mistake of differentiating the numerator and denominator separately without using the quotient rule.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This occurs if the terms in the quotient rule numerator are added instead of subtracted.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math"><span class="frac"><span class="frac-num">3t<sup>2</sup> + 2t + 1</span><span class="frac-den">(t + 1)<sup>2</sup></span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This occurs if the terms in the quotient rule numerator are added instead of subtracted.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Applying the quotient rule formula $\frac{vu' - uv'}{v^2}$ with $u = t^2+1$ ($u'=2t$) and $v = t+1$ ($v'=1$) yields $\frac{(t+1)(2t) - (t^2+1)(1)}{(t+1)^2} = \frac{t^2+2t-1}{(t+1)^2}$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math"><span class="frac"><span class="frac-num">t<sup>2</sup> + 2t - 1</span><span class="frac-den">(t + 1)<sup>2</sup></span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Applying the quotient rule formula <span class="math"><span class="frac"><span class="frac-num">vu' - uv'</span><span class="frac-den">v<sup>2</sup></span></span></span> with <span class="math">u = t<sup>2</sup>+1</span> (<span class="math">u'=2t</span>) and <span class="math">v = t+1</span> (<span class="math">v'=1</span>) yields <span class="math"><span class="frac"><span class="frac-num">(t+1)(2t) - (t<sup>2</sup>+1)(1)</span><span class="frac-den">(t+1)<sup>2</sup></span></span> = <span class="frac"><span class="frac-num">t<sup>2</sup>+2t-1</span><span class="frac-den">(t+1)<sup>2</sup></span></span></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This option results from neglecting to differentiate the numerator during the quotient assembly step.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math"><span class="frac"><span class="frac-num">t<sup>2</sup> + 1</span><span class="frac-den">(t + 1)<sup>2</sup></span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option results from neglecting to differentiate the numerator during the quotient assembly step.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Question 8</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Differentiate the signal <span class="math">x(t) = sin(3t + 1)</span> with respect to time <span class="math">t</span>.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Multiply the derivative of the outer sine function by the derivative of the inner linear function.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="By the chain rule, setting $u = 3t + 1$ gives $\frac{dx}{dt} = \cos(u) \cdot \frac{du}{dt} = 3\cos(3t + 1)$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">3cos(3t + 1)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">By the chain rule, setting <span class="math">u = 3t + 1</span> gives <span class="math"><span class="frac"><span class="frac-num">dx</span><span class="frac-den">dt</span></span> = cos(u) · <span class="frac"><span class="frac-num">du</span><span class="frac-den">dt</span></span> = 3cos(3t + 1)</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This option incorrectly applies the negative sign rule reserved for cosine derivatives.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">-cos(3t + 1)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option incorrectly applies the negative sign rule reserved for cosine derivatives.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This option forgets to multiply by the derivative of the inner function $3t + 1$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">cos(3t + 1)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option forgets to multiply by the derivative of the inner function <span class="math">3t + 1</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This choice mistakenly introduces an erroneous negative sign while differentiating sine.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">-3cos(3t + 1)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This choice mistakenly introduces an erroneous negative sign while differentiating sine.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Question 9</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Find the derivative <span class="math"><span class="frac"><span class="frac-num">dy</span><span class="frac-den">dt</span></span></span> for the composite function <span class="math">y = (6 - t)<sup>5</sup></span>.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Substitute <span class="math">u = 6 - t</span>, differentiate <span class="math">u<sup>5</sup></span> with respect to <span class="math">u</span>, and multiply by <span class="math"><span class="frac"><span class="frac-num">du</span><span class="frac-den">dt</span></span></span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Using the chain rule with $u = 6 - t$ ($\frac{du}{dt} = -1$) yields $5u^4 \cdot (-1) = -5(6 - t)^4$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">-5(6 - t)<sup>4</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Using the chain rule with <span class="math">u = 6 - t</span> (<span class="math"><span class="frac"><span class="frac-num">du</span><span class="frac-den">dt</span></span> = -1</span>) yields <span class="math">5u<sup>4</sup> · (-1) = -5(6 - t)<sup>4</sup></span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="This option overlooks the negative sign resulting from differentiating the inner term $-t$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">5(6 - t)<sup>4</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This option overlooks the negative sign resulting from differentiating the inner term <span class="math">-t</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This error comes from failing to reduce the power exponent by $1$ during power rule application.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">-5(6 - t)<sup>5</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This error comes from failing to reduce the power exponent by <span class="math">1</span> during power rule application.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This answer ignores both the power decrease rule and the inner function derivative.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">5(6 - t)<sup>5</sup></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This answer ignores both the power decrease rule and the inner function derivative.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Question 10</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">For the function <span class="math">y = <span class="frac"><span class="frac-num">2x</span><span class="frac-den">x + 1</span></span></span>, find the value of the second derivative <span class="math"><span class="frac"><span class="frac-num">d<sup>2</sup>y</span><span class="frac-den">dx<sup>2</sup></span></span></span> evaluated at <span class="math">x = 3</span>.</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">First use the quotient rule to find <span class="math"><span class="frac"><span class="frac-num">dy</span><span class="frac-den">dx</span></span></span>, rewrite it with a negative exponent, apply the chain rule to find <span class="math"><span class="frac"><span class="frac-num">d<sup>2</sup>y</span><span class="frac-den">dx<sup>2</sup></span></span></span>, and substitute <span class="math">x = 3</span>.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="This value is calculated by evaluating the first derivative $\frac{2}{(3+1)^2} = \frac{2}{16} = \frac{1}{8}$ instead of taking the second derivative.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math"><span class="frac"><span class="frac-num">1</span><span class="frac-den">8</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This value is calculated by evaluating the first derivative <span class="math"><span class="frac"><span class="frac-num">2</span><span class="frac-den">(3+1)<sup>2</sup></span></span> = <span class="frac"><span class="frac-num">2</span><span class="frac-den">16</span></span> = <span class="frac"><span class="frac-num">1</span><span class="frac-den">8</span></span></span> instead of taking the second derivative.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="The first derivative simplifies to $\frac{2}{(x+1)^2} = 2(x+1)^{-2}$. Differentiating again yields $\frac{d^2y}{dx^2} = -4(x+1)^{-3}$. At $x=3$, $-4(4)^{-3} = -4/64 = -1/16$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">-<span class="frac"><span class="frac-num">1</span><span class="frac-den">16</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">The first derivative simplifies to <span class="math"><span class="frac"><span class="frac-num">2</span><span class="frac-den">(x+1)<sup>2</sup></span></span> = 2(x+1)<sup>-2</sup></span>. Differentiating again yields <span class="math"><span class="frac"><span class="frac-num">d<sup>2</sup>y</span><span class="frac-den">dx<sup>2</sup></span></span> = -4(x+1)<sup>-3</sup></span>. At <span class="math">x=3</span>, <span class="math">-4(4)<sup>-3</sup> = -4/64 = -1/16</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="This error occurs if the coefficient $-4$ from the second derivative step is incorrectly omitted.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">-<span class="frac"><span class="frac-num">1</span><span class="frac-den">64</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This error occurs if the coefficient <span class="math">-4</span> from the second derivative step is incorrectly omitted.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="This stems from a sign error when differentiating $2(x+1)^{-2}$ via the power rule.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math"><span class="frac"><span class="frac-num">1</span><span class="frac-den">16</span></span></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">This stems from a sign error when differentiating <span class="math">2(x+1)<sup>-2</sup></span> via the power rule.</div>
+          </div>
+        </div>
+      </div>
+          <button class="submit-btn" disabled>✓ Submit Answer</button>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>Quiz Complete!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Try Again</button>
+  </div>
+</div>
+
+<!-- Submit feedback popup -->
+<div class="quiz-modal" id="quizModal" role="dialog" aria-modal="true" aria-labelledby="quizModalTitle">
+  <div class="quiz-modal-card">
+    <div class="quiz-modal-icon" id="quizModalIcon">🎉</div>
+    <div class="quiz-modal-title" id="quizModalTitle">Correct!</div>
+    <div class="quiz-modal-message" id="quizModalMessage"></div>
+    <button class="quiz-modal-close" id="quizModalClose">Continue</button>
+  </div>
+</div>
+
+<script>
+const quizData = [{"question":"Find the first derivative $\\frac{dx}{dt}$ for the combined signal function $x(t) = 3t^2 + 4e^{-t} + 5\\sin(2t)$.","hint":"Apply the power rule, exponential rule, and sine chain rule term-by-term.","options":[{"label":"A","text":"$6t + 4e^{-t} + 10\\cos(2t)$","isCorrect":false,"rationale":"This option fails to account for the negative sign resulting from differentiating $e^{-t}$."},{"label":"B","text":"$6t - 4e^{-t} + 5\\cos(2t)$","isCorrect":false,"rationale":"This option forgets to multiply the coefficient by the inner derivative of $2t$ when differentiating $5\\sin(2t)$."},{"label":"C","text":"$3t - 4e^{-t} + 10\\cos(2t)$","isCorrect":false,"rationale":"This option incorrectly reduces the coefficient of the power term instead of multiplying by the exponent."},{"label":"D","text":"$6t - 4e^{-t} + 10\\cos(2t)$","isCorrect":true,"rationale":"Differentiating term-by-term using the power rule on $3t^2$, the exponential rule on $4e^{-t}$, and the sine rule with chain rule on $5\\sin(2t)$ yields this correct expression."}]},{"question":"What is the first derivative $\\frac{dx}{dt}$ of the polynomial and trigonometric signal $x(t) = 6t^5 - 4t^2 + 9 - 2\\cos(5t)$?","hint":"Differentiate each term independently and remember the negative sign in the derivative of cosine.","options":[{"label":"A","text":"$6t^4 - 4t + 10\\sin(5t)$","isCorrect":false,"rationale":"This choice neglects multiplying the base coefficients by the powers during the power rule step."},{"label":"B","text":"$30t^4 - 8t + 9 + 10\\sin(5t)$","isCorrect":false,"rationale":"This option incorrectly retains the constant term $9$, which should differentiate to $0$."},{"label":"C","text":"$30t^4 - 8t + 10\\sin(5t)$","isCorrect":true,"rationale":"Differentiating $6t^5$ gives $30t^4$, $-4t^2$ gives $-8t$, the constant $9$ vanishes, and $-2\\cos(5t)$ gives $-2(-5\\sin(5t)) = 10\\sin(5t)$."},{"label":"D","text":"$30t^4 - 8t - 10\\sin(5t)$","isCorrect":false,"rationale":"This mistake stems from forgetting that the derivative of cosine introduces an additional negative sign, turning $-2\\cos(5t)$ into positive $+10\\sin(5t)$."}]},{"question":"Given the polynomial signal $x(t) = t^3 - 3t^2 + 2t$, what is its second derivative $x''(t)$?","hint":"Differentiate the polynomial function once to get the first derivative, then differentiate again.","options":[{"label":"A","text":"$3t^2 - 6t + 2$","isCorrect":false,"rationale":"This expression represents only the first derivative $x'(t)$ rather than the second derivative $x''(t)$."},{"label":"B","text":"$6t$","isCorrect":false,"rationale":"This option incorrectly drops the derivative of the $-6t$ term during the second differentiation step."},{"label":"C","text":"$6t - 6$","isCorrect":true,"rationale":"First derivative $x'(t) = 3t^2 - 6t + 2$; differentiating a second time yields $x''(t) = 6t - 6$."},{"label":"D","text":"$6t - 6t$","isCorrect":false,"rationale":"This error occurs if power reduction is misapplied to the linear term during the second differentiation step."}]},{"question":"For a sinusoidal signal $x(t) = 4\\cos(3t)$, what is its second derivative $x''(t)$?","hint":"Remember that two differentiations of a cosine signal result in a negated cosine multiplied by $\\omega^2$.","options":[{"label":"A","text":"$-36\\cos(3t)$","isCorrect":true,"rationale":"Differentiating twice multiplies the original signal by $-\\omega^2 = -3^2 = -9$, giving $-9 \\cdot 4\\cos(3t) = -36\\cos(3t)$."},{"label":"B","text":"$-12\\cos(3t)$","isCorrect":false,"rationale":"This error arises from failing to multiply by the inner frequency factor $\\omega = 3$ during the second differentiation step."},{"label":"C","text":"$36\\cos(3t)$","isCorrect":false,"rationale":"This option omits the negative sign introduced by two successive trigonometric differentiations."},{"label":"D","text":"$-12\\sin(3t)$","isCorrect":false,"rationale":"This answer corresponds to the first derivative $x'(t)$, not the second derivative."}]},{"question":"Find the derivative of the signal $x(t) = t^2 e^{-3t}$ using the product rule.","hint":"Apply $u'v + uv'$ where one factor is $t^2$ and the other is $e^{-3t}$.","options":[{"label":"A","text":"$2t e^{-3t}$","isCorrect":false,"rationale":"This option only differentiates the polynomial part while leaving the exponential part untouched without completing the product rule."},{"label":"B","text":"$(2t - 3t^2)e^{-3t}$","isCorrect":true,"rationale":"Applying $(uv)' = u'v + uv'$ with $u = t^2$ ($u' = 2t$) and $v = e^{-3t}$ ($v' = -3e^{-3t}$) yields $2t e^{-3t} - 3t^2 e^{-3t} = (2t - 3t^2)e^{-3t}$."},{"label":"C","text":"$(2t + 3t^2)e^{-3t}$","isCorrect":false,"rationale":"This option fails to carry the negative sign from differentiating $e^{-3t}$."},{"label":"D","text":"$-6t e^{-3t}$","isCorrect":false,"rationale":"This common procedural error comes from multiplying the derivatives of individual factors instead of using the product rule formula."}]},{"question":"Using the product rule, what is the first derivative of the composite signal $x(t) = e^{-t} \\cos(3t)$?","hint":"Use the formula $(uv)' = u'v + uv'$ and remember that $\\frac{d}{dt}\\cos(3t) = -3\\sin(3t)$.","options":[{"label":"A","text":"$-e^{-t} \\cos(3t) + 3e^{-t} \\sin(3t)$","isCorrect":false,"rationale":"This stems from a sign mistake when differentiating $\\cos(3t)$, which should yield a negative sine term."},{"label":"B","text":"$-e^{-t} \\cos(3t) - 3e^{-t} \\sin(3t)$","isCorrect":true,"rationale":"Setting $u = e^{-t}$ ($u' = -e^{-t}$) and $v = \\cos(3t)$ ($v' = -3\\sin(3t)$) gives $u'v + uv' = -e^{-t}\\cos(3t) - 3e^{-t}\\sin(3t)$."},{"label":"C","text":"$3e^{-t} \\sin(3t)$","isCorrect":false,"rationale":"This incorrect result comes from directly multiplying individual factor derivatives."},{"label":"D","text":"$-e^{-t} \\sin(3t)$","isCorrect":false,"rationale":"This reflects a confusion between the product rule and standard chain rule differentiation."}]},{"question":"Find the derivative $\\frac{dx}{dt}$ of the rational signal expression $x(t) = \\frac{t^2 + 1}{t + 1}$.","hint":"Use the quotient rule formula $\\frac{vu' - uv'}{v^2}$ with $u$ as the numerator and $v$ as the denominator.","options":[{"label":"A","text":"$2t$","isCorrect":false,"rationale":"This represents the mistake of differentiating the numerator and denominator separately without using the quotient rule."},{"label":"B","text":"$\\frac{3t^2 + 2t + 1}{(t + 1)^2}$","isCorrect":false,"rationale":"This occurs if the terms in the quotient rule numerator are added instead of subtracted."},{"label":"C","text":"$\\frac{t^2 + 2t - 1}{(t + 1)^2}$","isCorrect":true,"rationale":"Applying the quotient rule formula $\\frac{vu' - uv'}{v^2}$ with $u = t^2+1$ ($u'=2t$) and $v = t+1$ ($v'=1$) yields $\\frac{(t+1)(2t) - (t^2+1)(1)}{(t+1)^2} = \\frac{t^2+2t-1}{(t+1)^2}$."},{"label":"D","text":"$\\frac{t^2 + 1}{(t + 1)^2}$","isCorrect":false,"rationale":"This option results from neglecting to differentiate the numerator during the quotient assembly step."}]},{"question":"Differentiate the signal $x(t) = \\sin(3t + 1)$ with respect to time $t$.","hint":"Multiply the derivative of the outer sine function by the derivative of the inner linear function.","options":[{"label":"A","text":"$3\\cos(3t + 1)$","isCorrect":true,"rationale":"By the chain rule, setting $u = 3t + 1$ gives $\\frac{dx}{dt} = \\cos(u) \\cdot \\frac{du}{dt} = 3\\cos(3t + 1)$."},{"label":"B","text":"$-\\cos(3t + 1)$","isCorrect":false,"rationale":"This option incorrectly applies the negative sign rule reserved for cosine derivatives."},{"label":"C","text":"$\\cos(3t + 1)$","isCorrect":false,"rationale":"This option forgets to multiply by the derivative of the inner function $3t + 1$."},{"label":"D","text":"$-3\\cos(3t + 1)$","isCorrect":false,"rationale":"This choice mistakenly introduces an erroneous negative sign while differentiating sine."}]},{"question":"Find the derivative $\\frac{dy}{dt}$ for the composite function $y = (6 - t)^5$.","hint":"Substitute $u = 6 - t$, differentiate $u^5$ with respect to $u$, and multiply by $\\frac{du}{dt}$.","options":[{"label":"A","text":"$-5(6 - t)^4$","isCorrect":true,"rationale":"Using the chain rule with $u = 6 - t$ ($\\frac{du}{dt} = -1$) yields $5u^4 \\cdot (-1) = -5(6 - t)^4$."},{"label":"B","text":"$5(6 - t)^4$","isCorrect":false,"rationale":"This option overlooks the negative sign resulting from differentiating the inner term $-t$."},{"label":"C","text":"$-5(6 - t)^5$","isCorrect":false,"rationale":"This error comes from failing to reduce the power exponent by $1$ during power rule application."},{"label":"D","text":"$5(6 - t)^5$","isCorrect":false,"rationale":"This answer ignores both the power decrease rule and the inner function derivative."}]},{"question":"For the function $y = \\frac{2x}{x + 1}$, find the value of the second derivative $\\frac{d^2y}{dx^2}$ evaluated at $x = 3$.","hint":"First use the quotient rule to find $\\frac{dy}{dx}$, rewrite it with a negative exponent, apply the chain rule to find $\\frac{d^2y}{dx^2}$, and substitute $x = 3$.","options":[{"label":"A","text":"$\\frac{1}{8}$","isCorrect":false,"rationale":"This value is calculated by evaluating the first derivative $\\frac{2}{(3+1)^2} = \\frac{2}{16} = \\frac{1}{8}$ instead of taking the second derivative."},{"label":"B","text":"$-\\frac{1}{16}$","isCorrect":true,"rationale":"The first derivative simplifies to $\\frac{2}{(x+1)^2} = 2(x+1)^{-2}$. Differentiating again yields $\\frac{d^2y}{dx^2} = -4(x+1)^{-3}$. At $x=3$, $-4(4)^{-3} = -4/64 = -1/16$."},{"label":"C","text":"$-\\frac{1}{64}$","isCorrect":false,"rationale":"This error occurs if the coefficient $-4$ from the second derivative step is incorrectly omitted."},{"label":"D","text":"$\\frac{1}{16}$","isCorrect":false,"rationale":"This stems from a sign error when differentiating $2(x+1)^{-2}$ via the power rule."}]}];
+const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Next Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Right answer","notQuite":"Incorrect!"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+
+  document.querySelectorAll('.option').forEach(opt => {
+    opt.addEventListener('click', () => selectOption(opt));
+  });
+
+  document.querySelectorAll('.submit-btn').forEach(btn => {
+    btn.addEventListener('click', submitAnswer);
+  });
+
+  document.querySelectorAll('.next-btn').forEach(btn => {
+    btn.addEventListener('click', nextQuestion);
+  });
+
+  document.getElementById('quizModalClose').addEventListener('click', closePopup);
+
+  // Also allow Enter/Escape to close the popup.
+  document.getElementById('quizModal').addEventListener('click', (e) => {
+    if (e.target.id === 'quizModal') closePopup();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePopup();
+  });
+}
+
+function selectOption(opt) {
+  if (answered) return;
+
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+
+  // Allow the student to change their selection before submitting.
+  options.forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+
+  const submitBtn = q.querySelector('.submit-btn');
+  submitBtn.disabled = false;
+}
+
+function submitAnswer() {
+  if (answered) return;
+
+  const q = document.querySelector('.question.active');
+  const selected = q.querySelector('.option.selected');
+
+  if (!selected) return;
+
+  answered = true;
+
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const submitBtn = q.querySelector('.submit-btn');
+  const isCorrect = selected.dataset.correct === 'true';
+
+  options.forEach(o => o.classList.add('disabled'));
+  submitBtn.disabled = true;
+
+  // Mark selected option.
+  selected.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+  // Show correct answer if the submitted answer is wrong.
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+
+  if (isCorrect) correctCount++;
+
+  // Prepare the detailed feedback behind the popup.
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+
+  showPopup(isCorrect, selected.dataset.rationale || '');
+}
+
+function showPopup(isCorrect, rationale) {
+  const modal = document.getElementById('quizModal');
+  const icon = document.getElementById('quizModalIcon');
+  const title = document.getElementById('quizModalTitle');
+  const message = document.getElementById('quizModalMessage');
+
+  if (isCorrect) {
+    icon.textContent = '🎉';
+    title.textContent = 'Correct!';
+    title.style.color = '#166534';
+    message.innerHTML = '<strong>Well done!</strong><br>Your answer is correct.';
+  } else {
+    icon.textContent = '💡';
+    title.textContent = 'Incorrect!';
+    title.style.color = '#991b1b';
+    message.innerHTML = '<strong>Keep trying!</strong><br>The correct answer is highlighted in green. You can review the explanation below the options.';
+  }
+
+  modal.classList.add('show');
+  document.getElementById('quizModalClose').focus();
+}
+
+function closePopup() {
+  document.getElementById('quizModal').classList.remove('show');
+}
+
+function nextQuestion() {
+  closePopup();
+  answered = false;
+  currentQ++;
+
+  if (currentQ >= quizData.length) {
+    showResults();
+    return;
+  }
+
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width =
+    (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent =
+    tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  closePopup();
+  currentQ = 0;
+  correctCount = 0;
+  answered = false;
+
+  document.getElementById('results').classList.remove('active');
+
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+
+    q.querySelectorAll('.option').forEach(o => {
+      o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct');
+    });
+
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+
+    const submitBtn = q.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>
